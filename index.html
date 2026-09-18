@@ -1,1 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>직업 궁합 테스트</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard","Noto Sans KR",Arial,sans-serif;background:#f6f7fb;color:#20242d}
+.wrap{max-width:760px;margin:0 auto;padding:28px 18px 48px}
+.card{background:#fff;border:1px solid #e8eaf0;border-radius:24px;padding:30px;box-shadow:0 10px 30px rgba(30,40,70,.06)}
+h1{margin:0 0 8px;font-size:30px;letter-spacing:-1px}
+.sub{margin:0 0 24px;color:#6d7482;font-size:15px;line-height:1.6}
+.progress{height:8px;background:#edf0f5;border-radius:10px;overflow:hidden;margin-bottom:28px}
+.bar{height:100%;width:0;background:#5b5ce2;transition:.25s}
+.qnum{font-size:13px;font-weight:700;color:#5b5ce2;margin-bottom:8px}
+.question{font-size:22px;font-weight:800;line-height:1.45;margin-bottom:20px;letter-spacing:-.5px}
+.options{display:grid;gap:10px}
+button{font:inherit;cursor:pointer}
+.option{width:100%;padding:17px 18px;border:1px solid #e2e5eb;border-radius:15px;background:#fff;text-align:left;transition:.15s}
+.option:hover{border-color:#5b5ce2;background:#f8f8ff}
+.option.selected{border-color:#5b5ce2;background:#f1f1ff;box-shadow:0 0 0 2px rgba(91,92,226,.08)}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:24px}
+.nav button{border:0;border-radius:13px;padding:13px 18px}
+.prev{background:#eef0f4;color:#555}
+.next{background:#20242d;color:#fff;min-width:90px}
+.next:disabled{opacity:.35;cursor:not-allowed}
+.result{text-align:center}
+.badge{display:inline-block;padding:7px 12px;border-radius:999px;background:#f1f1ff;color:#5051d3;font-size:13px;font-weight:800}
+.result h2{font-size:30px;margin:16px 0 8px}
+.result .desc{color:#666f7c;line-height:1.65;margin-bottom:24px}
+.jobgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;text-align:left}
+.job{border:1px solid #e5e7ed;border-radius:16px;padding:16px}
+.job strong{display:block;margin-bottom:5px}
+.job span{font-size:13px;color:#707784;line-height:1.5}
+.section{text-align:left;margin-top:24px;padding-top:22px;border-top:1px solid #eceef3}
+.section h3{margin:0 0 12px;font-size:17px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:#f5f6f8;border-radius:999px;padding:8px 11px;font-size:13px}
+.restart{margin-top:24px;background:#5b5ce2;color:#fff;border:0;border-radius:13px;padding:14px 20px}
+.note{font-size:12px;color:#8a909b;margin-top:16px;line-height:1.5}
+.hidden{display:none}
+@media(max-width:560px){.card{padding:22px}.jobgrid{grid-template-columns:1fr}.question{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <section id="test">
+      <h1>직업 궁합 테스트</h1>
+      <p class="sub">내가 좋아하는 직업보다, <b>내가 잘 일할 수 있는 방식</b>을 찾아보는 테스트예요.<br>정답은 없어요. 지금의 나를 기준으로 편하게 골라보세요.</p>
+      <div class="progress"><div class="bar" id="bar"></div></div>
+      <div class="qnum" id="qnum"></div>
+      <div class="question" id="question"></div>
+      <div class="options" id="options"></div>
+      <div class="nav">
+        <button class="prev" id="prev">이전</button>
+        <button class="next" id="next" disabled>다음</button>
+      </div>
+    </section>
 
+    <section id="result" class="result hidden">
+      <span class="badge">나의 일하는 스타일</span>
+      <h2 id="resultTitle"></h2>
+      <p class="desc" id="resultDesc"></p>
+      <div class="jobgrid" id="jobs"></div>
+
+      <div class="section">
+        <h3>나에게 중요한 업무 특징</h3>
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <div class="section">
+        <h3>한 번 더 생각해보기</h3>
+        <p class="desc">직업 이름이 마음에 드는 것과 그 직업의 <b>일하는 방식</b>이 나에게 맞는 것은 같을까요?</p>
+      </div>
+
+      <button class="restart" onclick="restart()">다시 해보기</button>
+      <p class="note">※ 재미있는 자기이해 활동을 위한 간단한 테스트입니다. 실제 적성·진로검사를 대신하지 않습니다.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+const questions=[
+ {q:"친구와 함께 과제를 할 때 나는…", a:[
+  ["역할을 나누고 함께 이야기하는 게 좋다",["people","talk"]],
+  ["각자 맡은 일을 정리해서 하는 게 좋다",["solo","detail"]]]},
+ {q:"새로운 일을 배울 때 나는…", a:[
+  ["직접 해보면서 익히는 편이다",["change","idea"]],
+  ["설명이나 자료를 먼저 보고 익히는 편이다",["detail","system"]]]},
+ {q:"다음 중 더 편한 일은?", a:[
+  ["사람의 질문을 듣고 설명해 주기",["people","talk"]],
+  ["자료를 정리하고 숫자를 확인하기",["detail","solo"]]]},
+ {q:"업무가 갑자기 바뀌면 나는…", a:[
+  ["새로운 일이 생기는 게 오히려 재미있다",["change","idea"]],
+  ["기준과 순서가 정해져 있는 게 편하다",["system","detail"]]]},
+ {q:"내가 더 자신 있는 능력은?", a:[
+  ["말로 설명하고 설득하기",["talk","people"]],
+  ["꼼꼼하게 확인하고 실수 찾기",["detail","system"]]]},
+ {q:"하루 종일 컴퓨터로 자료를 정리해야 한다면…", a:[
+  ["집중해서 하는 편이라 괜찮다",["solo","detail"]],
+  ["중간중간 사람과 소통하는 일이 있었으면 좋겠다",["people","change"]]]},
+ {q:"문제가 생겼을 때 나는…", a:[
+  ["원인을 찾아 하나씩 해결한다",["system","detail"]],
+  ["새로운 방법을 떠올려 해결해 본다",["idea","change"]]]},
+ {q:"내가 원하는 일의 분위기는?", a:[
+  ["안정적이고 체계적인 분위기",["system","solo"]],
+  ["활기차고 변화가 있는 분위기",["change","people"]]]},
+ {q:"고객이나 다른 사람을 상대하는 일이 많다면…", a:[
+  ["사람을 만나고 이야기하는 게 괜찮다",["people","talk"]],
+  ["가능하면 자료·업무 중심으로 일하고 싶다",["solo","detail"]]]},
+ {q:"내가 일할 때 가장 듣고 싶은 말은?", a:[
+  ["“설명을 정말 잘하네!”",["talk","people"]],
+  ["“정말 꼼꼼하고 정확하네!”",["detail","system"]]]}
+];
+
+const styles={
+ people:{name:"사람과 함께하는 소통형",desc:"사람을 만나고 이야기하며 관계를 만드는 업무에서 강점을 발휘할 수 있어요.",jobs:[
+  ["고객관리","고객의 질문을 듣고 필요한 서비스를 안내해요."],
+  ["마케팅","사람의 관심을 끌 아이디어와 홍보 방법을 생각해요."],
+  ["영업·상담","고객의 필요를 파악하고 알맞은 상품이나 서비스를 설명해요."],
+  ["비서·사무지원","사람과 소통하며 일정과 업무를 조율해요."]]},
+ talk:{name:"설명·설득 커뮤니케이션형",desc:"말과 설명을 통해 정보를 전달하고 상대방을 이해시키는 업무와 잘 맞을 수 있어요.",jobs:[
+  ["은행·금융상담","금융상품과 서비스를 고객에게 이해하기 쉽게 설명해요."],
+  ["고객상담","고객의 상황을 듣고 해결 방법을 안내해요."],
+  ["홍보·마케팅","아이디어를 말과 콘텐츠로 전달해요."],
+  ["영업","상품이나 서비스의 장점을 설명하고 관계를 만들어가요."]]},
+ detail:{name:"꼼꼼·정확한 관리형",desc:"숫자와 자료를 확인하고 정리하는 업무에서 강점을 발휘할 수 있어요.",jobs:[
+  ["회계·세무","거래 자료와 숫자를 정확하게 기록하고 확인해요."],
+  ["금융사무","금융 관련 자료와 업무를 꼼꼼하게 처리해요."],
+  ["사무행정","문서와 자료를 정리하고 업무가 원활하게 진행되도록 지원해요."],
+  ["공공기관 사무","정해진 절차에 따라 자료와 행정업무를 처리해요."]]},
+ solo:{name:"집중·분석형",desc:"혼자 집중해서 자료를 다루고 문제를 차분하게 해결하는 업무와 잘 맞을 수 있어요.",jobs:[
+  ["회계","자료를 분석하고 숫자를 정확하게 처리해요."],
+  ["데이터 사무","자료를 정리하고 필요한 정보를 찾아요."],
+  ["금융사무","금융자료를 확인하고 관련 업무를 처리해요."],
+  ["사무행정","문서와 데이터를 관리하며 업무를 지원해요."]]},
+ system:{name:"체계·안정형",desc:"정해진 기준과 절차를 이해하고 순서대로 정확하게 처리하는 업무에서 강점을 보일 수 있어요.",jobs:[
+  ["회계·세무","규정과 기준에 맞게 회계자료를 처리해요."],
+  ["공공기관 행정","정해진 절차에 따라 행정업무를 수행해요."],
+  ["금융사무","규정과 절차에 맞춰 금융 관련 업무를 처리해요."],
+  ["총무·사무관리","회사 운영에 필요한 자료와 업무를 체계적으로 관리해요."]]},
+ change:{name:"변화·활동형",desc:"새로운 상황을 경험하고 다양한 사람이나 업무를 만나며 일하는 환경을 선호할 수 있어요.",jobs:[
+  ["마케팅","시장과 고객의 변화에 맞춰 새로운 아이디어를 만들어요."],
+  ["홍보","새로운 콘텐츠와 메시지를 기획해요."],
+  ["영업","고객과 상황에 따라 다양한 방식으로 소통해요."],
+  ["무역·상무","거래처와 다양한 업무를 조율하며 변화에 대응해요."]]},
+ idea:{name:"아이디어·창의형",desc:"기존 방법을 그대로 따르기보다 새로운 아이디어를 떠올리고 문제를 다르게 바라보는 업무에 흥미를 느낄 수 있어요.",jobs:[
+  ["마케팅 기획","고객의 관심을 끌 새로운 아이디어를 기획해요."],
+  ["콘텐츠 기획","사람들이 좋아할 콘텐츠의 주제와 구성을 생각해요."],
+  ["홍보","새로운 방식으로 정보를 전달하는 방법을 만들어요."],
+  ["브랜드 기획","상품이나 서비스의 이미지를 새롭게 기획해요."]]}
+};
+
+let idx=0, answers=[];
+const qEl=document.getElementById("question"), oEl=document.getElementById("options");
+const nEl=document.getElementById("qnum"), bar=document.getElementById("bar");
+const next=document.getElementById("next"), prev=document.getElementById("prev");
+
+function render(){
+ const q=questions[idx];
+ nEl.textContent=`QUESTION ${idx+1} / ${questions.length}`;
+ qEl.textContent=q.q;
+ oEl.innerHTML="";
+ q.a.forEach((item,i)=>{
+  const b=document.createElement("button");
+  b.className="option"+(answers[idx]===i?" selected":"");
+  b.textContent=item[0];
+  b.onclick=()=>{answers[idx]=i; render();};
+  oEl.appendChild(b);
+ });
+ next.disabled=answers[idx]===undefined;
+ next.textContent=idx===questions.length-1?"결과 보기":"다음";
+ prev.style.visibility=idx===0?"hidden":"visible";
+ bar.style.width=((idx)/questions.length*100)+"%";
+}
+next.onclick=()=>{if(idx<questions.length-1){idx++;render()}else showResult()};
+prev.onclick=()=>{if(idx>0){idx--;render()}};
+
+function showResult(){
+ const score={people:0,talk:0,detail:0,solo:0,system:0,change:0,idea:0};
+ answers.forEach((ans,i)=>questions[i].a[ans][1].forEach(k=>score[k]++));
+ const keys=Object.keys(score).sort((a,b)=>score[b]-score[a]);
+ const top=keys[0], second=keys[1];
+ const s=styles[top];
+ document.getElementById("test").classList.add("hidden");
+ document.getElementById("result").classList.remove("hidden");
+ document.getElementById("resultTitle").textContent=s.name;
+ document.getElementById("resultDesc").textContent=s.desc;
+ document.getElementById("jobs").innerHTML=s.jobs.map(j=>`<div class="job"><strong>${j[0]}</strong><span>${j[1]}</span></div>`).join("");
+ const labels={people:"사람과 소통",talk:"설명·설득",detail:"꼼꼼함·정확성",solo:"집중·분석",system:"체계·절차",change:"변화·활동",idea:"아이디어·창의성"};
+ document.getElementById("chips").innerHTML=[top,second].map(k=>`<span class="chip">${labels[k]}</span>`).join("");
+ bar.style.width="100%";
+}
+function restart(){idx=0;answers=[];document.getElementById("result").classList.add("hidden");document.getElementById("test").classList.remove("hidden");render();}
+render();
+</script>
+</body>
+</html>
